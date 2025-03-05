@@ -1,19 +1,23 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import os
 
 app = FastAPI()
 
-# Modèle pour recevoir les paramètres
 class PatchRequest(BaseModel):
     style: str
     complexity: str
 
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
-    # Simulation : Génération d'un patch fictif
-    file_url = f"https://example.com/patches/{request.style}_{request.complexity}.vcv"
-    return {"file_url": file_url}
+    # Générer un fichier .vcv fictif pour le test
+    filename = f"{request.style}_{request.complexity}.vcv"
+    filepath = f"static/{filename}"
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Créer un fichier vide (à remplacer par une vraie génération)
+    os.makedirs("static", exist_ok=True)
+    with open(filepath, "w") as f:
+        f.write("Patch VCV Rack - Contenu fictif pour test\n")
+
+    file_url = f"https://bouncingcircuits-api.onrender.com/static/{filename}"
+    return {"file_url": file_url}
