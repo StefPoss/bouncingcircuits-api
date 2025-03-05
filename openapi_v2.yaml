@@ -1,0 +1,37 @@
+openapi: 3.1.0
+info:
+  title: Bouncing Circuits API
+  description: API pour générer des patchs VCV Rack inspirés d'Aphex Twin.
+  version: 1.0.0
+servers:
+  - url: https://bouncingcircuits-api.onrender.com
+paths:
+  /generate_vcv_patch:
+    post:
+      summary: Génère un patch VCV Rack basé sur un style donné.
+      operationId: generate_vcv_patch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                style:
+                  type: string
+                  description: Style du patch (ambient, breakcore, granular...)
+                complexity:
+                  type: string
+                  enum: [simple, intermediate, advanced]
+                  description: Niveau de complexité du patch.
+      responses:
+        "200":
+          description: URL du patch VCV généré.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file_url:
+                    type: string
+                    description: Lien de téléchargement du fichier VCV.
