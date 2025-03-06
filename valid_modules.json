@@ -1,42 +1,58 @@
 {
-    "VCV": [
+    "Core": [
+        "AudioInterface2",
+        "AudioInterface",
+        "AudioInterface16",
+        "MIDIToCVInterface",
+        "MIDICCToCVInterface",
+        "MIDITriggerToCVInterface",
+        "MIDI-Map",
+        "CV-MIDI",
+        "CV-CC",
+        "CV-Gate",
+        "Blank",
+        "Notes"
+    ],
+    "Fundamental": [
         "VCO",
+        "VCO2",
         "VCF",
+        "VCA-1",
         "LFO",
-        "VCA",
+        "LFO2",
         "Delay",
-        "Chorus",
-        "Plateau",
         "ADSR",
         "Mixer",
-        "Sampler",
-        "SEQ3",
-        "Fundamental",
-        "Splitter",
+        "VCMixer",
+        "8vert",
+        "Mutes",
+        "Pulses",
         "Scope",
-        "Quantizer"
-    ],
-    "Bogaudio": [
-        "VCO",
-        "VCF",
-        "VCA",
-        "AD",
-        "Mixer",
-        "Delay",
-        "LFO",
-        "Switch"
-    ],
-    "NYSTHI": [
-        "Sampler",
+        "SEQ3",
+        "SequentialSwitch1",
+        "SequentialSwitch2",
+        "Octave",
+        "Quantizer",
+        "Split",
+        "Merge",
+        "Sum",
+        "Viz",
+        "MidSide",
         "Noise",
-        "SlewLimiter"
+        "Random",
+        "CVMix",
+        "Fade",
+        "Logic",
+        "Compare",
+        "Gates",
+        "Process",
+        "Mult",
+        "Rescale",
+        "RandomValues",
+        "Push",
+        "SHASR"
     ],
-    "Valley": [
-        "Plateau",
-        "Dexter"
-    ],
-    "MindMeld": [
-        "MixMaster",
-        "MixMasterJr"
+    "VCV-Recorder": [
+        "Recorder"
     ]
 }
