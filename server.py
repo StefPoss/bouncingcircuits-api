@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 # Charger la liste des modules valides depuis un fichier externe
 VALID_MODULES_FILE = "valid_modules.json"
+
 if os.path.exists(VALID_MODULES_FILE):
     with open(VALID_MODULES_FILE, "r") as f:
         VALID_MODULES = json.load(f)
@@ -30,27 +31,33 @@ def is_valid_module(plugin, model):
 def generate_patch(request: PatchRequest):
     filename = f"{request.style}_{request.complexity}.vcv"
     filepath = os.path.join("/tmp", filename)
-    
-    # Exemple de modules générés (doit être amélioré pour la génération dynamique)
+
+    def is_valid_module(plugin, model):
+        """Vérifie si un module est valide en fonction de la liste chargée."""
+        return plugin in VALID_MODULES and model in VALID_MODULES.get(plugin, [])
+
+    # Sélectionner quelques modules valides pour générer un patch
     selected_modules = [
         {"plugin": "VCV", "model": "VCO"},
         {"plugin": "VCV", "model": "VCF"},
         {"plugin": "Bogaudio", "model": "Mixer"}
     ]
-    
+
     # Filtrer uniquement les modules valides
-    valid_selected_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
-    
+    valid_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
+
+    # Construire le patch JSON
     patch_data = {
         "version": "2.5.2",
         "modules": valid_modules,
         "wires": []
     }
-    
+
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
-    
+
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+
 
 @app.get("/list_files")
 def list_files():
