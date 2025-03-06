@@ -58,3 +58,9 @@ def list_files():
         return {"files": files}
     except Exception as e:
         return {"error": str(e)}
+    
+@app.get("/list_valid_modules")
+def list_valid_modules():
+    with open("valid_modules.json", "r") as f:
+        valid_modules = json.load(f)
+    return valid_modules
