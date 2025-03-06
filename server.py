@@ -1,8 +1,12 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
 
 app = FastAPI()
+
+# Dossier /tmp accessible sur Render
+app.mount("/static", StaticFiles(directory="/tmp"), name="static")
 
 class PatchRequest(BaseModel):
     style: str
@@ -10,25 +14,18 @@ class PatchRequest(BaseModel):
 
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
-    # Générer un fichier .vcv fictif pour le test
     filename = f"{request.style}_{request.complexity}.vcv"
-    filepath = f"static/{filename}"
+    filepath = os.path.join("/tmp", filename)
 
-    # Créer un fichier vide (à remplacer par une vraie génération)
-    os.makedirs("static", exist_ok=True)
     with open(filepath, "w") as f:
         f.write("Patch VCV Rack - Contenu fictif pour test\n")
 
-    file_url = f"https://bouncingcircuits-api.onrender.com/static/{filename}"
-    return {"file_url": file_url}
-
-from fastapi.responses import JSONResponse
+    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
 
 @app.get("/list_files")
 def list_files():
     try:
-        files = os.listdir("static")
-        return JSONResponse({"files": files})
+        files = os.listdir("/tmp")
+        return {"files": files}
     except Exception as e:
-        return JSONResponse({"error": str(e)})
-
+        return {"error": str(e)}
