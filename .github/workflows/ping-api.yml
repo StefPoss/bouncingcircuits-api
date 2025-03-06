@@ -1,0 +1,12 @@
+name: Keep Render API Alive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"  # Exécuter toutes les 5 minutes
+
+jobs:
+  keep_alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API Render
+        run: curl -X GET "https://bouncingcircuits-api.onrender.com/list_files"
