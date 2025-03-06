@@ -1,4 +1,3 @@
 fastapi
 uvicorn
 aiofiles
-pip install --upgrade pip
