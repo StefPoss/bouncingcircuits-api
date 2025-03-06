@@ -63,3 +63,12 @@ def generate_patch(request: PatchRequest):
         json.dump(patch_data, f, indent=4)
 
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+
+@app.get("/list_files")
+def list_files():
+    try:
+        files = os.listdir("/tmp")
+        return {"files": files}
+    except Exception as e:
+        return {"error": str(e)}
+
