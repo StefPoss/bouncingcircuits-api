@@ -21,3 +21,14 @@ def generate_patch(request: PatchRequest):
 
     file_url = f"https://bouncingcircuits-api.onrender.com/static/{filename}"
     return {"file_url": file_url}
+
+from fastapi.responses import JSONResponse
+
+@app.get("/list_files")
+def list_files():
+    try:
+        files = os.listdir("static")
+        return JSONResponse({"files": files})
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
