@@ -33,13 +33,19 @@ def generate_patch(request: PatchRequest):
 
     # Sélectionner quelques modules valides pour générer un patch
     selected_modules = [
-        {"plugin": "VCV", "model": "VCO"},
-        {"plugin": "VCV", "model": "VCF"},
-        {"plugin": "Bogaudio", "model": "Mixer"}
+        {"id": 0, "plugin": "Fundamental", "model": "VCO"},
+        {"id": 1, "plugin": "Fundamental", "model": "VCF"},
+        {"id": 2, "plugin": "Fundamental", "model": "Mixer"},
+        {"id": 3, "plugin": "Core", "model": "AudioInterface"}  # Module de sortie
     ]
+
+    print("Modules valides chargés :", VALID_MODULES)
+    print("Modules sélectionnés avant filtrage :", selected_modules)
 
     # Filtrer uniquement les modules valides
     valid_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
+
+    print("Modules après filtrage :", valid_modules)
 
     # Ajouter des connexions entre les modules
     wires = []
@@ -47,9 +53,22 @@ def generate_patch(request: PatchRequest):
         wires = [
             {"outputModuleId": 0, "outputId": "saw", "inputModuleId": 1, "inputId": "in"},  # VCO → VCF
             {"outputModuleId": 1, "outputId": "lowpass", "inputModuleId": 2, "inputId": "in"},  # VCF → Mixer
-            {"outputModuleId": 2, "outputId": "left", "inputModuleId": None, "inputId": "audioL"},  # Mixer → Sortie Gauche
-            {"outputModuleId": 2, "outputId": "right", "inputModuleId": None, "inputId": "audioR"}  # Mixer → Sortie Droite
         ]
+
+    # Connexion du Mixer à l'Audio Interface
+    if len(valid_modules) >= 4:
+        wires.append({
+            "outputModuleId": 2,  # Mixer -> Audio Interface
+            "outputId": "mix",
+            "inputModuleId": 3,  # Audio Interface
+            "inputId": "left"
+        })
+        wires.append({
+            "outputModuleId": 2,
+            "outputId": "mix",
+            "inputModuleId": 3,
+            "inputId": "right"
+        })
 
     # Construire le patch JSON
     patch_data = {
