@@ -33,10 +33,10 @@ def generate_patch(request: PatchRequest):
 
     # Sélectionner quelques modules valides pour générer un patch
     selected_modules = [
-        {"id": 0, "plugin": "Fundamental", "model": "VCO"},
-        {"id": 1, "plugin": "Fundamental", "model": "VCF"},
-        {"id": 2, "plugin": "Fundamental", "model": "Mixer"},
-        {"id": 3, "plugin": "Core", "model": "AudioInterface"}  # Module de sortie
+        {"plugin": "Fundamental", "model": "VCO"},
+        {"plugin": "Fundamental", "model": "VCF"},
+        {"plugin": "Fundamental", "model": "Mixer"},
+        {"plugin": "Core", "model": "AudioInterface"}  # Module de sortie
     ]
 
     print("Modules valides chargés :", VALID_MODULES)
@@ -47,28 +47,33 @@ def generate_patch(request: PatchRequest):
 
     print("Modules après filtrage :", valid_modules)
 
+    # Forcer l'ordre des modules pour éviter les erreurs d'ID
+    module_ids = {m["model"]: i for i, m in enumerate(valid_modules)}
+
     # Ajouter des connexions entre les modules
     wires = []
     if len(valid_modules) >= 3:
         wires = [
-            {"outputModuleId": 0, "outputId": "saw", "inputModuleId": 1, "inputId": "in"},  # VCO → VCF
-            {"outputModuleId": 1, "outputId": "lowpass", "inputModuleId": 2, "inputId": "in"},  # VCF → Mixer
+            {"outputModuleId": module_ids["VCO"], "outputId": "saw", "inputModuleId": module_ids["VCF"], "inputId": "in"},  # VCO → VCF
+            {"outputModuleId": module_ids["VCF"], "outputId": "LPF", "inputModuleId": module_ids["Mixer"], "inputId": "in"},  # VCF → Mixer
         ]
-
-    # Connexion du Mixer à l'Audio Interface
+    
     if len(valid_modules) >= 4:
         wires.append({
-            "outputModuleId": 2,  # Mixer -> Audio Interface
+            "outputModuleId": module_ids["Mixer"],  # Mixer -> Audio Interface
             "outputId": "mix",
-            "inputModuleId": 3,  # Audio Interface
+            "inputModuleId": module_ids["AudioInterface"],  # Audio Interface
             "inputId": "left"
         })
+
         wires.append({
-            "outputModuleId": 2,
+            "outputModuleId": module_ids["Mixer"],
             "outputId": "mix",
-            "inputModuleId": 3,
+            "inputModuleId": module_ids["AudioInterface"],
             "inputId": "right"
         })
+
+    print("Câblage généré :", json.dumps(wires, indent=4))
 
     # Construire le patch JSON
     patch_data = {
