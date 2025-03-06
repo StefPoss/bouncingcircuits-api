@@ -26,15 +26,10 @@ def is_valid_module(plugin, model):
     """Vérifie si un module est valide en fonction de la liste chargée."""
     return plugin in VALID_MODULES and model in VALID_MODULES.get(plugin, [])
 
-
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
     filename = f"{request.style}_{request.complexity}.vcv"
     filepath = os.path.join("/tmp", filename)
-
-    def is_valid_module(plugin, model):
-        """Vérifie si un module est valide en fonction de la liste chargée."""
-        return plugin in VALID_MODULES and model in VALID_MODULES.get(plugin, [])
 
     # Sélectionner quelques modules valides pour générer un patch
     selected_modules = [
@@ -46,18 +41,27 @@ def generate_patch(request: PatchRequest):
     # Filtrer uniquement les modules valides
     valid_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
 
+    # Ajouter des connexions entre les modules
+    wires = []
+    if len(valid_modules) >= 3:
+        wires = [
+            {"outputModuleId": 0, "outputId": "saw", "inputModuleId": 1, "inputId": "in"},  # VCO → VCF
+            {"outputModuleId": 1, "outputId": "lowpass", "inputModuleId": 2, "inputId": "in"},  # VCF → Mixer
+            {"outputModuleId": 2, "outputId": "left", "inputModuleId": None, "inputId": "audioL"},  # Mixer → Sortie Gauche
+            {"outputModuleId": 2, "outputId": "right", "inputModuleId": None, "inputId": "audioR"}  # Mixer → Sortie Droite
+        ]
+
     # Construire le patch JSON
     patch_data = {
         "version": "2.5.2",
         "modules": valid_modules,
-        "wires": []
+        "wires": wires
     }
 
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
 
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
-
 
 @app.get("/list_files")
 def list_files():
