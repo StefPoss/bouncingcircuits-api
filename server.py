@@ -23,7 +23,8 @@ class PatchRequest(BaseModel):
 
 def is_valid_module(plugin, model):
     """Vérifie si un module est valide en fonction de la liste chargée."""
-    return plugin in VALID_MODULES and model in VALID_MODULES[plugin]
+    return plugin in VALID_MODULES and model in VALID_MODULES.get(plugin, [])
+
 
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
@@ -31,14 +32,14 @@ def generate_patch(request: PatchRequest):
     filepath = os.path.join("/tmp", filename)
     
     # Exemple de modules générés (doit être amélioré pour la génération dynamique)
-    modules = [
-        {"plugin": "Fundamental", "model": "VCO"},
-        {"plugin": "Fundamental", "model": "VCF"},
-        {"plugin": "Fundamental", "model": "VCA"}
+    selected_modules = [
+        {"plugin": "VCV", "model": "VCO"},
+        {"plugin": "VCV", "model": "VCF"},
+        {"plugin": "Bogaudio", "model": "Mixer"}
     ]
     
     # Filtrer uniquement les modules valides
-    valid_modules = [m for m in modules if is_valid_module(m["plugin"], m["model"])]
+    valid_selected_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
     
     patch_data = {
         "version": "2.5.2",
