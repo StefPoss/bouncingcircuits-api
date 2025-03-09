@@ -1,8 +1,10 @@
 import os
 import json
+import urllib.parse
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
 
 # Définition du répertoire de stockage des fichiers
 TMP_DIR = "/opt/render/tmp/"
@@ -33,7 +35,7 @@ def is_valid_module(plugin, model):
 
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
-    filename = f"{request.style}_{request.complexity}.vcv"
+    filename = f"{request.style}_{request.complexity}.vcv".replace(" ", "_")
     filepath = os.path.join(TMP_DIR, filename)
 
     # Sélectionner quelques modules valides pour générer un patch
@@ -69,7 +71,8 @@ def generate_patch(request: PatchRequest):
     print(f"Patch enregistré sous : {filepath}")  # 🔹 Ajout pour voir où le fichier est créé
 
     # Retourner un lien cliquable pour le téléchargement
-    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{urllib.parse.quote(filename)}"}
+
 
 @app.get("/list_files")
 def list_files():
