@@ -15,9 +15,9 @@ else:
 
 app = FastAPI()
 
-# Dossier /tmp accessible sur Render pour stocker les fichiers générés
-STATIC_DIR = "/tmp"
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# Dossier /tmp accessible sur Render
+app.mount("/static", StaticFiles(directory="tmp"), name="static")
+
 
 class PatchRequest(BaseModel):
     style: str
@@ -30,67 +30,50 @@ def is_valid_module(plugin, model):
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
     filename = f"{request.style}_{request.complexity}.vcv"
-    filepath = os.path.join(STATIC_DIR, filename)
+    filepath = os.path.join("/tmp", filename)
 
-    # Sélectionner des modules valides
+    # Sélectionner quelques modules valides pour générer un patch
     selected_modules = [
-        {"plugin": "Fundamental", "model": "VCO", "id": 0},
-        {"plugin": "Fundamental", "model": "VCF", "id": 1},
-        {"plugin": "Fundamental", "model": "Mixer", "id": 2},
-        {"plugin": "Core", "model": "AudioInterface", "id": 3}  # Module de sortie
+        {"plugin": "Fundamental", "model": "VCO", "id": 0, "pos": [0, 0]},
+        {"plugin": "Fundamental", "model": "VCF", "id": 1, "pos": [9, 0]},
+        {"plugin": "Fundamental", "model": "Mixer", "id": 2, "pos": [16, 0]},
+        {"plugin": "Core", "model": "AudioInterface", "id": 3, "pos": [19, 0]}
     ]
 
-    print("Modules valides chargés :", VALID_MODULES)
-    print("Modules sélectionnés avant filtrage :", selected_modules)
-
-    # Filtrer uniquement les modules valides
+    # Vérifier que les modules sont bien valides
     valid_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
 
-    print("Modules après filtrage :", valid_modules)
-
     # Ajouter des connexions entre les modules
-    wires = []
-    if len(valid_modules) >= 3:
-        wires.extend([
-            {"outputModuleId": 0, "outputId": "sin", "inputModuleId": 1, "inputId": "in"},  # VCO → VCF
-            {"outputModuleId": 1, "outputId": "lowpass", "inputModuleId": 2, "inputId": "in"},  # VCF → Mixer
-        ])
-
-    if len(valid_modules) >= 4:
-        wires.extend([
-            {"outputModuleId": 2, "outputId": "mix", "inputModuleId": 3, "inputId": "1"},  # Mixer → Audio Interface (Left)
-            {"outputModuleId": 2, "outputId": "mix", "inputModuleId": 3, "inputId": "2"}   # Mixer → Audio Interface (Right)
-        ])
+    cables = [
+        {"id": 0, "outputModuleId": 0, "outputId": 0, "inputModuleId": 1, "inputId": 3, "color": "#f3374b"},  # ✅ VCO → VCF (entrée correcte)
+        {"id": 1, "outputModuleId": 1, "outputId": 0, "inputModuleId": 2, "inputId": 0, "color": "#ffb437"},  # ✅ VCF → Mixer
+        {"id": 2, "outputModuleId": 2, "outputId": 0, "inputModuleId": 3, "inputId": 0, "color": "#00b56e"},  # ✅ Mixer → AudioInterface (L)
+        {"id": 3, "outputModuleId": 2, "outputId": 0, "inputModuleId": 3, "inputId": 1, "color": "#3695ef"}   # ✅ Mixer → AudioInterface (R)
+    ]
 
     # Construire le patch JSON
     patch_data = {
         "version": "2.5.2",
         "modules": valid_modules,
-        "wires": wires
+        "cables": cables,
+        "masterModuleId": 3  # ✅ Ajout du masterModuleId pour correspondre à la sauvegarde VCV
     }
 
-    # Écrire le fichier JSON
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
 
-    return {"file_url": f"/static/{filename}"}
+    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
 
 @app.get("/list_files")
 def list_files():
-    """Liste les fichiers générés dans le dossier temporaire."""
     try:
-        files = os.listdir(STATIC_DIR)
+        files = os.listdir("/tmp")
         return {"files": files}
     except Exception as e:
         return {"error": str(e)}
-
+    
 @app.get("/list_valid_modules")
 def list_valid_modules():
-    """Retourne la liste des modules valides à partir du fichier JSON."""
-    with open(VALID_MODULES_FILE, "r") as f:
+    with open("valid_modules.json", "r") as f:
         valid_modules = json.load(f)
     return valid_modules
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8001, reload=True)
