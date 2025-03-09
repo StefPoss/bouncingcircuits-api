@@ -1,17 +1,19 @@
 import os
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import urllib.parse
 
-# Définition du répertoire de stockage des fichiers
-TMP_DIR = "/opt/render/tmp/"
+# Définir le chemin du dossier temporaire en fonction de l'environnement Render
+TMP_DIR = "/opt/render/tmp" if os.getenv("RENDER") else "tmp"
+
+# Vérifier si le dossier TMP_DIR existe, sinon le créer
 if not os.path.exists(TMP_DIR):
     os.makedirs(TMP_DIR)
 
 # Charger la liste des modules valides depuis un fichier externe
 VALID_MODULES_FILE = "valid_modules.json"
-
 if os.path.exists(VALID_MODULES_FILE):
     with open(VALID_MODULES_FILE, "r") as f:
         VALID_MODULES = json.load(f)
@@ -20,7 +22,7 @@ else:
 
 app = FastAPI()
 
-# Dossier accessible via /static/
+# Rendre le dossier temporaire accessible publiquement
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
 
 class PatchRequest(BaseModel):
@@ -33,10 +35,11 @@ def is_valid_module(plugin, model):
 
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
-    filename = f"{request.style}_{request.complexity}.vcv"
+    # Nettoyage du nom de fichier pour éviter les problèmes
+    filename = f"{request.style}_{request.complexity}.vcv".replace(" ", "_")
     filepath = os.path.join(TMP_DIR, filename)
 
-    # Sélectionner quelques modules valides pour générer un patch
+    # Sélection de modules valides
     selected_modules = [
         {"plugin": "Fundamental", "model": "VCO", "id": 0, "pos": [0, 0]},
         {"plugin": "Fundamental", "model": "VCF", "id": 1, "pos": [9, 0]},
@@ -44,32 +47,32 @@ def generate_patch(request: PatchRequest):
         {"plugin": "Core", "model": "AudioInterface", "id": 3, "pos": [19, 0]}
     ]
 
-    # Vérifier que les modules sont bien valides
     valid_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
 
-    # Ajouter des connexions entre les modules
+    # Câblage correct
     cables = [
-        {"id": 0, "outputModuleId": 0, "outputId": 0, "inputModuleId": 1, "inputId": 3, "color": "#f3374b"},  # ✅ VCO → VCF (entrée correcte)
-        {"id": 1, "outputModuleId": 1, "outputId": 0, "inputModuleId": 2, "inputId": 0, "color": "#ffb437"},  # ✅ VCF → Mixer
-        {"id": 2, "outputModuleId": 2, "outputId": 0, "inputModuleId": 3, "inputId": 0, "color": "#00b56e"},  # ✅ Mixer → AudioInterface (L)
-        {"id": 3, "outputModuleId": 2, "outputId": 0, "inputModuleId": 3, "inputId": 1, "color": "#3695ef"}   # ✅ Mixer → AudioInterface (R)
+        {"id": 0, "outputModuleId": 0, "outputId": 0, "inputModuleId": 1, "inputId": 0, "color": "#f3374b"},
+        {"id": 1, "outputModuleId": 1, "outputId": 0, "inputModuleId": 2, "inputId": 0, "color": "#ffb437"},
+        {"id": 2, "outputModuleId": 2, "outputId": 0, "inputModuleId": 3, "inputId": 0, "color": "#00b56e"},
+        {"id": 3, "outputModuleId": 2, "outputId": 0, "inputModuleId": 3, "inputId": 1, "color": "#3695ef"}
     ]
 
-    # Construire le patch JSON
     patch_data = {
         "version": "2.5.2",
         "modules": valid_modules,
         "cables": cables,
-        "masterModuleId": 3  # ✅ Ajout du masterModuleId pour correspondre à la sauvegarde VCV
+        "masterModuleId": 3
     }
 
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
 
-    print(f"Patch enregistré sous : {filepath}")  # 🔹 Ajout pour voir où le fichier est créé
+    print(f"Patch enregistré sous : {filepath}")
 
-    # Retourner un lien cliquable pour le téléchargement
-    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+    # URL encodée correctement pour éviter les problèmes d'affichage
+    encoded_filename = urllib.parse.quote(filename)
+    file_url = f"https://bouncingcircuits-api.onrender.com/static/{encoded_filename}"
+    return {"file_url": file_url}
 
 @app.get("/list_files")
 def list_files():
@@ -78,11 +81,16 @@ def list_files():
         return {"files": files}
     except Exception as e:
         return {"error": str(e)}
-    
-@app.get("/list_files_debug")
-def list_files_debug():
-    files = os.listdir(os.path.abspath(TMP_DIR))
-    return {"all_files": files}
+
+@app.get("/download/{filename}")
+def download_file(filename: str):
+    filepath = os.path.join(TMP_DIR, filename)
+    if os.path.exists(filepath):
+        with open(filepath, "rb") as f:
+            content = f.read()
+        headers = {"Content-Disposition": f"attachment; filename={filename}"}
+        return Response(content, media_type="application/octet-stream", headers=headers)
+    return {"detail": "File not found"}
 
 @app.get("/list_valid_modules")
 def list_valid_modules():
