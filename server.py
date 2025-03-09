@@ -2,7 +2,6 @@ import os
 import json
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 # Définition du répertoire de stockage des fichiers
@@ -69,9 +68,8 @@ def generate_patch(request: PatchRequest):
 
     print(f"Patch enregistré sous : {filepath}")  # 🔹 Ajout pour voir où le fichier est créé
 
-    # Retourne directement le fichier avec un header de téléchargement
+    # Retourner un lien cliquable pour le téléchargement
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
-
 
 @app.get("/list_files")
 def list_files():
