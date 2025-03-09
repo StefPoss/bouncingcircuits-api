@@ -66,6 +66,8 @@ def generate_patch(request: PatchRequest):
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
 
+    print(f"Patch enregistré sous : {filepath}")  # 🔹 Ajout pour voir où le fichier est créé
+
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
 
 @app.get("/list_files")
