@@ -70,7 +70,8 @@ def generate_patch(request: PatchRequest):
     print(f"Patch enregistré sous : {filepath}")  # 🔹 Ajout pour voir où le fichier est créé
 
     # Retourne directement le fichier avec un header de téléchargement
-    return FileResponse(filepath, filename=filename, media_type="application/octet-stream")
+    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+
 
 @app.get("/list_files")
 def list_files():
