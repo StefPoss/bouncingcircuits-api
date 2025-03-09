@@ -4,9 +4,10 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-# Vérifier si le dossier 'tmp' existe, sinon le créer
-if not os.path.exists("tmp"):
-    os.makedirs("tmp")
+# Vérifier si le dossier '/opt/render/tmp/' existe, sinon le créer
+TMP_DIR = "/opt/render/tmp/"
+if not os.path.exists(TMP_DIR):
+    os.makedirs(TMP_DIR)
 
 # Charger la liste des modules valides depuis un fichier externe
 VALID_MODULES_FILE = "valid_modules.json"
@@ -19,9 +20,8 @@ else:
 
 app = FastAPI()
 
-# Dossier /tmp accessible sur Render
-app.mount("/static", StaticFiles(directory="tmp"), name="static")
-
+# Dossier /opt/render/tmp/ accessible sur Render
+app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
 
 class PatchRequest(BaseModel):
     style: str
@@ -34,7 +34,7 @@ def is_valid_module(plugin, model):
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
     filename = f"{request.style}_{request.complexity}.vcv"
-    filepath = os.path.join("/tmp", filename)
+    filepath = os.path.join(TMP_DIR, filename)
 
     # Sélectionner quelques modules valides pour générer un patch
     selected_modules = [
@@ -73,17 +73,16 @@ def generate_patch(request: PatchRequest):
 @app.get("/list_files")
 def list_files():
     try:
-        files = os.listdir("/tmp")
+        files = os.listdir(TMP_DIR)
         return {"files": files}
     except Exception as e:
         return {"error": str(e)}
     
 @app.get("/list_files_debug")
 def list_files_debug():
-    files = os.listdir(os.path.abspath("tmp"))
+    files = os.listdir(os.path.abspath(TMP_DIR))
     return {"all_files": files}
 
-    
 @app.get("/list_valid_modules")
 def list_valid_modules():
     with open("valid_modules.json", "r") as f:
