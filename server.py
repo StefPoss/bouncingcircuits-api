@@ -78,6 +78,12 @@ def list_files():
     except Exception as e:
         return {"error": str(e)}
     
+@app.get("/list_files_debug")
+def list_files_debug():
+    files = os.listdir(os.path.abspath("tmp"))
+    return {"all_files": files}
+
+    
 @app.get("/list_valid_modules")
 def list_valid_modules():
     with open("valid_modules.json", "r") as f:
