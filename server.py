@@ -4,6 +4,10 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+# Vérifier si le dossier 'tmp' existe, sinon le créer
+if not os.path.exists("tmp"):
+    os.makedirs("tmp")
+
 # Charger la liste des modules valides depuis un fichier externe
 VALID_MODULES_FILE = "valid_modules.json"
 
