@@ -2,9 +2,10 @@ import os
 import json
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-# Vérifier si le dossier '/opt/render/tmp/' existe, sinon le créer
+# Définition du répertoire de stockage des fichiers
 TMP_DIR = "/opt/render/tmp/"
 if not os.path.exists(TMP_DIR):
     os.makedirs(TMP_DIR)
@@ -20,7 +21,7 @@ else:
 
 app = FastAPI()
 
-# Dossier /opt/render/tmp/ accessible sur Render
+# Dossier accessible via /static/
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
 
 class PatchRequest(BaseModel):
@@ -68,7 +69,8 @@ def generate_patch(request: PatchRequest):
 
     print(f"Patch enregistré sous : {filepath}")  # 🔹 Ajout pour voir où le fichier est créé
 
-    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+    # Retourne directement le fichier avec un header de téléchargement
+    return FileResponse(filepath, filename=filename, media_type="application/octet-stream")
 
 @app.get("/list_files")
 def list_files():
