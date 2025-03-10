@@ -3,6 +3,7 @@ import json
 import random
 import threading
 import time
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -35,9 +36,18 @@ app = FastAPI()
 def startup_event():
     print("✅ Serveur FastAPI démarré avec succès !")
 
+@app.on_event("shutdown")
+def shutdown_event():
+    print("⚠️ Serveur FastAPI est en train de s'arrêter !")
+
 @app.get("/")
 def root():
     return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
+
+@app.get("/health")
+def health_check():
+    """Répond aux requêtes HEAD pour éviter l'erreur 405 sur Render."""
+    return {"status": "ok"}
 
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
 
@@ -103,29 +113,19 @@ def generate_patch(request: PatchRequest):
     
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
 
-@app.get("/list_files")
-def list_files():
-    try:
-        files = os.listdir(TMP_DIR)
-        return {"files": files}
-    except Exception as e:
-        return {"error": str(e)}
+# Thread keep-alive qui utilise l'URL publique
 
-@app.get("/download/{filename}")
-def download_file(filename: str):
-    filepath = os.path.join(TMP_DIR, filename)
-    if os.path.exists(filepath):
-        return FileResponse(filepath, media_type="application/octet-stream", filename=filename, headers={"Content-Disposition": f"attachment; filename={filename}"}, as_attachment=True)
-    return {"error": "File not found"}
-
-@app.get("/list_valid_modules")
-def list_valid_modules():
-    return VALID_MODULES
-
-# Thread pour empêcher Render de tuer le processus
 def keep_alive():
     while True:
-        time.sleep(60)  # Ping toutes les 60 secondes pour garder le service actif
-        print("🔄 Keep-alive ping envoyé")
+        try:
+            requests.get("https://bouncingcircuits-api.onrender.com/health")
+            print("🔄 Keep-alive ping envoyé")
+        except Exception as e:
+            print(f"⚠️ Erreur keep-alive: {e}")
+        time.sleep(30)
 
 threading.Thread(target=keep_alive, daemon=True).start()
+
+# Boucle infinie pour éviter l'arrêt du serveur
+while True:
+    time.sleep(60)
