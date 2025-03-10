@@ -8,8 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import time
 
-# Définition du dossier temporaire correct pour Render
-TMP_DIR = "/opt/render/tmp"
+# Définition du dossier de stockage des fichiers générés
+TMP_DIR = "/opt/render/project/files"
 os.makedirs(TMP_DIR, exist_ok=True)
 
 # Charger la liste des modules valides
@@ -112,13 +112,14 @@ def generate_patch(request: PatchRequest):
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
     
-    # Vérifier que le fichier a bien été écrit avant de retourner la réponse
-    time.sleep(1)  # Pause rapide pour éviter des accès trop rapides
+    time.sleep(1)  # Pause rapide pour s'assurer que le fichier est écrit
     if not os.path.exists(filepath):
         raise HTTPException(status_code=500, detail="Le fichier VCV n'a pas été généré correctement.")
     
-    print(f"✅ Patch généré avec succès: {filepath}")
-    return FileResponse(filepath, media_type="application/octet-stream", filename=filename)
+    file_url = f"https://bouncingcircuits-api.onrender.com/static/{filename}"
+    print(f"✅ Patch généré avec succès: {file_url}")
+    
+    return {"file_url": file_url}
 
 if __name__ == "__main__":
     import uvicorn
