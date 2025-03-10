@@ -54,5 +54,23 @@
     ],
     "VCV-Recorder": [
         "Recorder"
+    ],
+    "NYSTHI": [
+        "ConfusingSimpler", "QuadSimpler"
+    ],
+    "Bogaudio": [
+        "VCO", "VCA", "LPG", "SampleHold", "Mixer"
+    ],
+    "Valley": [
+        "Plateau"
+    ],
+    "FrozenWasteland": [
+        "ProbablyNote", "SeriouslySlowLFO"
+    ],
+    "Impromptu": [
+        "TwelveKey", "Clocked"
+    ],
+    "MindMeld": [
+        "MixMaster"
     ]
 }
