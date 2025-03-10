@@ -69,7 +69,7 @@ def generate_patch(request: PatchRequest):
     complexity_levels = {"simple": 3, "intermediate": 5, "advanced": 7}
     num_modules = complexity_levels.get(request.complexity, 4)
     
-    selected_modules = random.sample(module_pool.get(request.style, module_pool["experimental"]), num_modules)},
+    selected_modules = random.sample(module_pool.get(request.style, module_pool["experimental"]), num_modules)
         {"plugin": "Fundamental", "model": "VCO", "id": 1, "pos": [8, 0]},
         {"plugin": "Fundamental", "model": "VCF", "id": 2, "pos": [16, 0]},
         {"plugin": "Fundamental", "model": "Mixer", "id": 3, "pos": [24, 0]},
