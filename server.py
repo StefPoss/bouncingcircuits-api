@@ -35,6 +35,7 @@ app = FastAPI()
 @app.on_event("startup")
 def startup_event():
     print("✅ Serveur FastAPI démarré avec succès !")
+    print("🚀 FastAPI tourne sur le bon port !")
 
 @app.on_event("shutdown")
 def shutdown_event():
@@ -45,6 +46,7 @@ def root():
     return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
 
 @app.get("/health")
+@app.head("/health")
 def health_check():
     """Répond aux requêtes HEAD pour éviter l'erreur 405 sur Render."""
     return {"status": "ok"}
@@ -113,8 +115,7 @@ def generate_patch(request: PatchRequest):
     
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
 
-# Thread keep-alive qui utilise l'URL publique
-
+# Vérification keep-alive avec URL publique
 def keep_alive():
     while True:
         try:
