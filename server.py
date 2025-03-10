@@ -1,6 +1,8 @@
 import os
 import json
 import random
+import threading
+import time
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +31,10 @@ print("📌 Modules chargés depuis valid_modules.json:", list(VALID_MODULES.key
 
 app = FastAPI()
 
+@app.on_event("startup")
+def startup_event():
+    print("✅ Serveur FastAPI démarré avec succès !")
+
 @app.get("/")
 def root():
     return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
@@ -44,6 +50,7 @@ def is_valid_module(plugin, model):
 
 @app.post("/generate_vcv_patch")
 def generate_patch(request: PatchRequest):
+    print(f"📌 Requête reçue: {request.style}, {request.complexity}")
     if not VALID_MODULES:
         raise HTTPException(status_code=500, detail="valid_modules.json non chargé ou vide")
     
@@ -77,12 +84,6 @@ def generate_patch(request: PatchRequest):
     
     if not selected_modules:
         raise HTTPException(status_code=500, detail="Aucun module valide sélectionné. Vérifiez valid_modules.json.")
-    
-    # Ajout automatique d'un séquenceur et d'un mixeur si nécessaire
-    if request.style in ["breakcore", "acid"]:
-        selected_modules.append({"plugin": "Fundamental", "model": "SEQ3", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
-    if request.complexity in ["intermediate", "advanced"]:
-        selected_modules.append({"plugin": "Fundamental", "model": "Mixer", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
     
     selected_modules.append({"plugin": "Core", "model": "AudioInterface", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
     
@@ -120,3 +121,11 @@ def download_file(filename: str):
 @app.get("/list_valid_modules")
 def list_valid_modules():
     return VALID_MODULES
+
+# Thread pour empêcher Render de tuer le processus
+def keep_alive():
+    while True:
+        time.sleep(60)  # Ping toutes les 60 secondes pour garder le service actif
+        print("🔄 Keep-alive ping envoyé")
+
+threading.Thread(target=keep_alive, daemon=True).start()
