@@ -35,8 +35,41 @@ def generate_patch(request: PatchRequest):
     filepath = os.path.join(TMP_DIR, filename)
 
     # Sélection de modules améliorée pour correspondre au style Aphex Twin
-    selected_modules = [
-        {"plugin": "Fundamental", "model": "VCO", "id": 0, "pos": [0, 0]},
+    import random
+
+    # Sélection dynamique des modules en fonction du style et de la complexité
+    module_pool = {
+        "ambient": [
+            {"plugin": "NYSTHI", "model": "ConfusingSimpler"},
+            {"plugin": "Valley", "model": "Plateau"},
+            {"plugin": "Bogaudio", "model": "LFO"},
+            {"plugin": "VCV", "model": "Reverb"}
+        ],
+        "breakcore": [
+            {"plugin": "Hora", "model": "DrumSequencer"},
+            {"plugin": "NYSTHI", "model": "ClockMultiplier"},
+            {"plugin": "VCV", "model": "Random"},
+            {"plugin": "Befaco", "model": "Kickall"}
+        ],
+        "acid": [
+            {"plugin": "VCV", "model": "VCO"},
+            {"plugin": "VCV", "model": "VCF"},
+            {"plugin": "Bogaudio", "model": "Env"},
+            {"plugin": "VCV", "model": "Delay"}
+        ],
+        "experimental": [
+            {"plugin": "NYSTHI", "model": "JunoV"},
+            {"plugin": "VCV", "model": "Noise"},
+            {"plugin": "Bogaudio", "model": "VCA"},
+            {"plugin": "VCV", "model": "Wavefolder"}
+        ]
+    }
+    
+    # Nombre de modules à sélectionner en fonction de la complexité
+    complexity_levels = {"simple": 3, "intermediate": 5, "advanced": 7}
+    num_modules = complexity_levels.get(request.complexity, 4)
+    
+    selected_modules = random.sample(module_pool.get(request.style, module_pool["experimental"]), num_modules)},
         {"plugin": "Fundamental", "model": "VCO", "id": 1, "pos": [8, 0]},
         {"plugin": "Fundamental", "model": "VCF", "id": 2, "pos": [16, 0]},
         {"plugin": "Fundamental", "model": "Mixer", "id": 3, "pos": [24, 0]},
@@ -91,7 +124,7 @@ def download_file(filename: str):
     """Fournit un lien de téléchargement avec Content-Disposition pour éviter l'ouverture directe"""
     filepath = os.path.join(TMP_DIR, filename)
     if os.path.exists(filepath):
-        return FileResponse(filepath, media_type="application/octet-stream", filename=filename, headers={"Content-Disposition": f"attachment; filename={filename}"})
+        return FileResponse(filepath, media_type="application/octet-stream", filename=filename, headers={"Content-Disposition": f"attachment; filename={filename}"}, as_attachment=True)
     return {"error": "File not found"}
 
 @app.get("/list_valid_modules")
