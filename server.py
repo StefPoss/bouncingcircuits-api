@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import time
 
 # Définition du dossier temporaire correct pour Render
 TMP_DIR = "/opt/render/tmp"
@@ -111,10 +112,13 @@ def generate_patch(request: PatchRequest):
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
     
-    file_url = f"/static/{filename}"
-    print(f"✅ Patch généré: {file_url}")
+    # Vérifier que le fichier a bien été écrit avant de retourner la réponse
+    time.sleep(1)  # Pause rapide pour éviter des accès trop rapides
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=500, detail="Le fichier VCV n'a pas été généré correctement.")
     
-    return {"file_url": file_url}
+    print(f"✅ Patch généré avec succès: {filepath}")
+    return FileResponse(filepath, media_type="application/octet-stream", filename=filename)
 
 if __name__ == "__main__":
     import uvicorn
