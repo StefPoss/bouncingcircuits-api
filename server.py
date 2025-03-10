@@ -42,8 +42,10 @@ def shutdown_event():
     print("⚠️ Serveur FastAPI est en train de s'arrêter !")
 
 @app.get("/")
+@app.head("/")
 def root():
     return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
+
 
 @app.get("/health")
 @app.head("/health")
