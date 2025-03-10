@@ -1,4 +1,8 @@
 import os
+
+# Installation automatique des dépendances si elles ne sont pas installées
+os.system("pip install --no-cache-dir -r requirements.txt")
+
 import json
 import random
 import threading
