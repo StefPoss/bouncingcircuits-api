@@ -49,7 +49,7 @@ def generate_patch(request: PatchRequest):
     
     num_modules = {"simple": 3, "intermediate": 5, "advanced": 7}.get(request.complexity, 4)
     selected_models = module_pool.get(request.style, module_pool["experimental"])
-    num_modules = min(num_modules, len(selected_models))  # Évite erreur si trop de modules demandés
+    num_modules = min(num_modules, len(selected_models))
     selected_models = random.sample(selected_models, num_modules)
     
     selected_modules = []
@@ -58,6 +58,9 @@ def generate_patch(request: PatchRequest):
             if model in VALID_MODULES[plugin]:
                 selected_modules.append({"plugin": plugin, "model": model, "id": i, "pos": [i * 8, 0]})
                 break
+    
+    if not selected_modules:
+        raise HTTPException(status_code=500, detail="Aucun module valide sélectionné. Vérifiez valid_modules.json.")
     
     selected_modules.append({"plugin": "Core", "model": "AudioInterface", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
     
