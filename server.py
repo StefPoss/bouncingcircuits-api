@@ -1,8 +1,4 @@
 import os
-
-# Installation automatique des dépendances si elles ne sont pas installées
-os.system("pip install --no-cache-dir -r requirements.txt")
-
 import json
 import random
 import threading
@@ -119,18 +115,7 @@ def generate_patch(request: PatchRequest):
     
     return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
 
-# Vérification keep-alive avec URL publique
-def keep_alive():
-    while True:
-        try:
-            requests.get("https://bouncingcircuits-api.onrender.com/health")
-            print("🔄 Keep-alive ping envoyé")
-        except Exception as e:
-            print(f"⚠️ Erreur keep-alive: {e}")
-        time.sleep(30)
-
-threading.Thread(target=keep_alive, daemon=True).start()
-
-# Boucle infinie pour éviter l'arrêt du serveur
-while True:
-    time.sleep(60)
+# Démarrer l'application sur le bon port
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
