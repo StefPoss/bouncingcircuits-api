@@ -1,8 +1,6 @@
 import os
 import json
 import random
-import threading
-import time
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -32,25 +30,14 @@ print("📌 Modules chargés depuis valid_modules.json:", list(VALID_MODULES.key
 
 app = FastAPI()
 
-@app.on_event("startup")
-def startup_event():
-    print("✅ Serveur FastAPI démarré avec succès !")
-    print("🚀 FastAPI tourne sur le bon port !")
-
-@app.on_event("shutdown")
-def shutdown_event():
-    print("⚠️ Serveur FastAPI est en train de s'arrêter !")
-
 @app.get("/")
 @app.head("/")
 def root():
     return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
 
-
 @app.get("/health")
 @app.head("/health")
 def health_check():
-    """Répond aux requêtes HEAD pour éviter l'erreur 405 sur Render."""
     return {"status": "ok"}
 
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
@@ -72,8 +59,8 @@ def generate_patch(request: PatchRequest):
     filepath = os.path.join(TMP_DIR, filename)
     
     module_pool = {
-        "ambient": ["VCO", "VCF", "Reverb", "LFO", "Plateau"],
-        "breakcore": ["DrumSequencer", "ClockMultiplier", "VCA", "Random", "Kickall"],
+        "ambient": ["VCO", "VCF", "LFO", "Plateau"],
+        "breakcore": ["DrumSequencer", "ClockMultiplier", "VCA", "Random"],
         "acid": ["VCO", "VCF", "VCA", "Delay", "Env"],
         "experimental": ["Noise", "Wavefolder", "SampleHold", "LFO", "Random"]
     }
@@ -115,9 +102,9 @@ def generate_patch(request: PatchRequest):
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
     
-    return {"file_url": f"https://bouncingcircuits-api.onrender.com/static/{filename}"}
+    return FileResponse(filepath, media_type="application/octet-stream", filename=filename)
 
-# Démarrer l'application sur le bon port
 if __name__ == "__main__":
     import uvicorn
+    print("🚀 Lancement de FastAPI...")
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
