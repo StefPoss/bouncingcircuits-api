@@ -19,7 +19,7 @@ if os.path.exists(VALID_MODULES_FILE):
         with open(VALID_MODULES_FILE, "r") as f:
             VALID_MODULES = json.load(f)
         if not VALID_MODULES:
-            print("⚠️ valid_modules.json est vide ou mal formatté!")
+            print("⚠️ valid_modules.json est vide ou mal formaté!")
     except json.JSONDecodeError as e:
         print(f"❌ Erreur de chargement de valid_modules.json: {e}")
         VALID_MODULES = {}
@@ -39,6 +39,15 @@ def root():
 @app.head("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/list_files")
+def list_files():
+    """Liste les fichiers disponibles dans le dossier temporaire."""
+    try:
+        files = os.listdir(TMP_DIR)
+        return {"files": files}
+    except Exception as e:
+        return {"error": str(e)}
 
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
 
