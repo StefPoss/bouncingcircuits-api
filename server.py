@@ -25,14 +25,14 @@ if os.path.exists(VALID_MODULES_FILE):
 else:
     print("⚠️ valid_modules.json introuvable!")
 
+print("📌 Modules chargés depuis valid_modules.json:", list(VALID_MODULES.keys()))
+
 app = FastAPI()
 
-# Route d'accueil pour éviter le 404 sur `/`
 @app.get("/")
 def root():
     return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
 
-# Rendre le dossier temporaire accessible via "/static"
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
 
 class PatchRequest(BaseModel):
@@ -51,16 +51,22 @@ def generate_patch(request: PatchRequest):
     filepath = os.path.join(TMP_DIR, filename)
     
     module_pool = {
-        "ambient": ["ConfusingSimpler", "Plateau", "LFO", "Reverb"],
-        "breakcore": ["DrumSequencer", "ClockMultiplier", "Random", "Kickall"],
-        "acid": ["VCO", "VCF", "Env", "Delay"],
-        "experimental": ["JunoV", "Noise", "VCA", "Wavefolder"]
+        "ambient": ["VCO", "VCF", "Reverb", "LFO", "Plateau"],
+        "breakcore": ["DrumSequencer", "ClockMultiplier", "VCA", "Random", "Kickall"],
+        "acid": ["VCO", "VCF", "VCA", "Delay", "Env"],
+        "experimental": ["Noise", "Wavefolder", "SampleHold", "LFO", "Random"]
     }
     
     num_modules = {"simple": 3, "intermediate": 5, "advanced": 7}.get(request.complexity, 4)
-    selected_models = module_pool.get(request.style, module_pool["experimental"])
-    num_modules = min(num_modules, len(selected_models))
-    selected_models = random.sample(selected_models, num_modules)
+    selected_models = module_pool.get(request.style, module_pool.get("experimental", []))
+    num_modules = min(num_modules, len(selected_models)) if selected_models else 3
+    
+    if not selected_models:
+        print(f"⚠️ Aucun module trouvé pour {request.style}, fallback sur des modules aléatoires")
+        all_models = [m for p in VALID_MODULES.values() for m in p]
+        selected_models = random.sample(all_models, min(num_modules, len(all_models)))
+    else:
+        selected_models = random.sample(selected_models, num_modules)
     
     selected_modules = []
     for i, model in enumerate(selected_models):
@@ -71,6 +77,12 @@ def generate_patch(request: PatchRequest):
     
     if not selected_modules:
         raise HTTPException(status_code=500, detail="Aucun module valide sélectionné. Vérifiez valid_modules.json.")
+    
+    # Ajout automatique d'un séquenceur et d'un mixeur si nécessaire
+    if request.style in ["breakcore", "acid"]:
+        selected_modules.append({"plugin": "Fundamental", "model": "SEQ3", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
+    if request.complexity in ["intermediate", "advanced"]:
+        selected_modules.append({"plugin": "Fundamental", "model": "Mixer", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
     
     selected_modules.append({"plugin": "Core", "model": "AudioInterface", "id": len(selected_modules), "pos": [len(selected_modules) * 8, 0]})
     
