@@ -70,14 +70,16 @@ def generate_patch(request: PatchRequest):
     num_modules = complexity_levels.get(request.complexity, 4)
     
     selected_modules = random.sample(module_pool.get(request.style, module_pool["experimental"]), num_modules)
+
+    selected_modules.extend([
         {"plugin": "Fundamental", "model": "VCO", "id": 1, "pos": [8, 0]},
         {"plugin": "Fundamental", "model": "VCF", "id": 2, "pos": [16, 0]},
         {"plugin": "Fundamental", "model": "Mixer", "id": 3, "pos": [24, 0]},
         {"plugin": "NYSTHI", "model": "ConfusingSimpler", "id": 4, "pos": [32, 0]},
         {"plugin": "Bogaudio", "model": "SampleHold", "id": 5, "pos": [40, 0]},
         {"plugin": "Valley", "model": "Plateau", "id": 6, "pos": [48, 0]},
-        {"plugin": "Core", "model": "AudioInterface", "id": 7, "pos": [56, 0]},
-    ]
+        {"plugin": "Core", "model": "AudioInterface", "id": 7, "pos": [56, 0]}
+    ])
 
     # Vérifier que les modules sont bien valides
     valid_modules = [m for m in selected_modules if is_valid_module(m["plugin"], m["model"])]
