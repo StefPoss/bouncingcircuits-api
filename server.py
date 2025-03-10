@@ -14,13 +14,23 @@ os.makedirs(TMP_DIR, exist_ok=True)
 VALID_MODULES_FILE = "valid_modules.json"
 VALID_MODULES = {}
 if os.path.exists(VALID_MODULES_FILE):
-    with open(VALID_MODULES_FILE, "r") as f:
-        try:
+    try:
+        with open(VALID_MODULES_FILE, "r") as f:
             VALID_MODULES = json.load(f)
-        except json.JSONDecodeError:
-            VALID_MODULES = {}
+        if not VALID_MODULES:
+            print("⚠️ valid_modules.json est vide ou mal formatté!")
+    except json.JSONDecodeError as e:
+        print(f"❌ Erreur de chargement de valid_modules.json: {e}")
+        VALID_MODULES = {}
+else:
+    print("⚠️ valid_modules.json introuvable!")
 
 app = FastAPI()
+
+# Route d'accueil pour éviter le 404 sur `/`
+@app.get("/")
+def root():
+    return {"message": "🚀 API VCV Rack est en ligne ! Utilise /generate_vcv_patch pour créer un patch."}
 
 # Rendre le dossier temporaire accessible via "/static"
 app.mount("/static", StaticFiles(directory=TMP_DIR), name="static")
