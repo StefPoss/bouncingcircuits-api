@@ -111,7 +111,10 @@ def generate_patch(request: PatchRequest):
     with open(filepath, "w") as f:
         json.dump(patch_data, f, indent=4)
     
-    return FileResponse(filepath, media_type="application/octet-stream", filename=filename)
+    file_url = f"/static/{filename}"
+    print(f"✅ Patch généré: {file_url}")
+    
+    return {"file_url": file_url}
 
 if __name__ == "__main__":
     import uvicorn
